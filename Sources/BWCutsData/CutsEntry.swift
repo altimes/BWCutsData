@@ -8,15 +8,23 @@
 import Foundation
 import BWCore
 
+/// structure with PTS and MARK_TYPE
+/// and sundry supporting functions to convert
+/// textural formats, perform comparions etc.
+
 public struct  CutEntry: Identifiable, Equatable, Comparable {
+  /// Identifiable compliance
   /// to facilitate use with ForEach
   public let id = UUID()
+  
   /// Presentation Time Stamp UInt64
   public var cutPts  : PtsType
+  
   /// type of a cut mark
   public var type : MARK_TYPE
   
-  /// designated initializer
+  /// Designated initializer that takes native values (UInt64 and UInt32) that have
+  /// been converted from values stored in file (bigendian values)
   init(cutPts:PtsType, type: UInt32)
   {
     self.cutPts = cutPts
@@ -33,7 +41,7 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
   /// A useful "0" entry for IN marks - ie start of recording
   static var InZero: CutEntry {
     get {
-      return CutEntry(cutPts: PtsType(0), type: MARK_TYPE.IN.rawValue)
+      return CutEntry(cutPts: PtsType.zero, type: MARK_TYPE.IN.rawValue)
     }
   }
   
@@ -44,7 +52,9 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
     return hexRep
   }
   
-  /// Convert to string with decimal values
+  // MARK: Utility functions
+  
+  /// Convert PTS to string with decimal values
   func asDecimal () -> String{
     let decimalRep = String(format: "%ld : %ld" , cutPts.value, type.rawValue)
     return decimalRep
@@ -56,9 +66,18 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
     return Double(self.cutPts.value) * TimeConstants.PTS_DURATION
   }
   
-  /// Convert N seconds in to HH:MM:SS[.ss] format for display
-  static func hhMMssFromSeconds(_ seconds: Double, resolution:Double) -> String
+  /// Converts a time interval in seconds to a formatted string (HH:MM:SS[.ss]) with custom resolution.
+  ///
+  /// This method transforms a value in seconds into a human-readable time string, displaying hours, minutes, seconds, and fractional seconds as needed.
+  /// The output format adapts based on the size of the interval (days, hours, minutes, or just seconds). Rounds the value based on the provided resolution.
+  ///
+  /// - Parameters:
+  ///   - seconds: The total time interval (in seconds) to format.
+  ///   - resolution: The display resolution (e.g., 25.0 for 1/25th second precision). Must not be 0.
+  /// - Returns: A formatted string in HH:MM:SS[.ss] format, or an empty string if resolution is zero.
+  public static func hhMMssFromSeconds(_ seconds: Double, resolution:Double) -> String
   {
+    guard resolution != 0.0 else { return "" }
     var inputSeconds = seconds
     var remainderSeconds = inputSeconds.truncatingRemainder(dividingBy: 60.0)
     // rounding
@@ -88,7 +107,13 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
     return result
   }
   
-  /// Convert N seconds in to HH:MM:SS.ss format for display
+  /// Converts a time interval in seconds to a formatted string (HH:MM:SS.ss).
+  ///
+  /// This method transforms a value in seconds into a human-readable time string, displaying hours, minutes, seconds, and fractional seconds as needed.
+  /// The output format adapts based on the size of the interval (days, hours, minutes, or just seconds).
+  ///
+  /// - Parameter seconds: The total time interval (in seconds) to format.
+  /// - Returns: A formatted string in HH:MM:SS.ss format.
   public static func hhMMssFromSeconds(_ seconds: Double) -> String
   {
     var inputSeconds = seconds
@@ -141,9 +166,7 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
 
   }
   
-  /// structure with PTS and MARK_TYPE
-  /// and sundry supporting functions to convert
-  /// textural formats, perform comparions etc.
+  // MARK: Comparable compliance (struct synthesis not supported)
 
   /// Operator equals
   public static func == (lhs: CutEntry, rhs: CutEntry) -> Bool
@@ -170,3 +193,4 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
   }
 
 }
+

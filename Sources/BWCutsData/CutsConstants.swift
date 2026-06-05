@@ -83,7 +83,8 @@ public enum MARK_TYPE : UInt32, CaseIterable
     }
   }
   
-  /// Given a suitable number try to return a MARK_TYPE
+  /// Given a suitable number try to return a MARK_TYPE\
+  ///
   /// - parameter raw: value of enum
   /// - returns : valid enum or nil
   static func lookupOnRawValue(_ raw : UInt32) -> MARK_TYPE

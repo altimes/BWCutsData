@@ -4,38 +4,40 @@
 //
 //  Created by Alan Franklin on 25/5/2026.
 //
-//  
+//
 
 import Foundation
 import BWCore
 
 extension CutsFile {
   
-  /// Unravels the binary chunk of data into the required local format
-  /// - parameter data: the Binary lump to be decoded
+  /// Decodes the binary chunk of data
+  /// The data typically comes as a binary load from a file
+  ///
+  /// - parameter data: the Binary data to be decoded
   
   public func decodeCutsData(_ data: Data)
   {
-      if (debug)  {
-        print("Found file ")
-        print("Found file of \((data.count))! size")
-      }
-      
-      let entries = (data.count) / MemoryLayout<FileCutData>.size
-      cutsArray = [CutEntry]()
+    if (debug)  {
+      print("Found file ")
+      print("Found file of \((data.count))! size")
+    }
     
-      // nibble through the data buffer and populate array
+    let entries = (data.count) / MemoryLayout<FileCutData>.size
+    cutsArray = [CutEntry]()
+    
+    // nibble through the data buffer and populate array
     let elementSize = MemoryLayout<FileCutData>.size
     var startOffset = 0
     
     for _ in 0 ..< entries
-      {
-        startOffset += elementSize
-        let cutEntry = data.extractCutEntry(at: startOffset)
-        cutsArray.append(cutEntry)
-      }
-      cutsArray.sort(by: <)
-      modified = false
+    {
+      startOffset += elementSize
+      let cutEntry = data.extractCutEntry(at: startOffset)
+      cutsArray.append(cutEntry)
+    }
+    cutsArray.sort(by: <)
+    modified = false
   }
   
   /// Encoder for collection. Encodes into binary form suitable for PVR
@@ -56,7 +58,8 @@ extension CutsFile {
   /// returns: success or failure of save
   func saveAs(filenamePath: String) -> Bool
   {
-    let (fileMgr, found, fullFileName) =  OSUtility.getFileManagerForFile(filenamePath)
+    let osUtility = OSUtility()
+    let (fileMgr, found, fullFileName) =  osUtility.getFileManagerForFile(filenamePath)
     if (found) {
       let cutsData = encodeCutsData()
       let fileWritten = fileMgr.createFile(atPath: fullFileName, contents: cutsData, attributes: nil)
@@ -69,11 +72,11 @@ extension CutsFile {
         if let cache = cache {
           cache.update(cutsData, forKey: fullFileName)
         }
-//        container!.updateValueInCache( cutsData, forKey: fullFileName)
+        //        container!.updateValueInCache( cutsData, forKey: fullFileName)
       }
       return fileWritten
     }
     return false
   }
-
+  
 }

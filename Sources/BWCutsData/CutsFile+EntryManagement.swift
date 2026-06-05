@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  CutsFile.swift
 //  BWCutsData
 //
 //  Created by Alan Franklin on 25/5/2026.
@@ -9,9 +9,10 @@ import Foundation
 
 extension CutsFile {
   
-  // MARK: Entry Management
+  // MARK: Array Entry Management
   
-  /// Get a copy of the cutEntry at requested sequence position in the collection.
+  /// Get a COPY of the cutEntry at requested sequence position in the collection.
+  ///
   /// - Returns: cutEntry or nil on invalid sequence position
   /// - parameter at: sequential position in the collection
   ///
@@ -27,6 +28,9 @@ extension CutsFile {
   }
   
   /// Add cut entry to array if it is not already present.
+  ///
+  /// Maintain order sorted by pts value
+  ///
   /// If it is present, then simply ignor the request
   /// - parameter cutEntry: entry to add to the collection
   public func addEntry(_ cutEntry: CutEntry) -> Bool
@@ -34,6 +38,7 @@ extension CutsFile {
     // check if already present
     if (!cutsArray.contains(cutEntry)) {
       insert(cutEntry)
+      modified = true
       return true
     }
     return false
@@ -53,32 +58,27 @@ extension CutsFile {
   }
   
   /// Test if collection has an IN or OUT Marker
+  ///
   /// - returns : true or false
-  public func containsINorOUT() -> Bool
+  public var containsINorOUT: Bool
   {
-    return contains(.IN) || contains(.OUT)
+    return contains([.IN, .OUT])
   }
   
-  /// Test if collection has a marker of the given type
+  /// Returns a Boolean value indicating whether the sequence contains markType
   /// - parameter cutOfType: case from emum (.IN, .OUT, .LASTPLAY, .BOOKMARK)
   /// - returns : true or false
-  func contains(_ cutOfType: MARK_TYPE) -> Bool
+  func contains(_ cutOfType: Set<MARK_TYPE>) -> Bool
   {
-    var found = false
-    var index = 0
-    while (!found && index < cutsArray.count)
-    {
-      found = cutsArray[index].type == cutOfType
-      if (found) {
-        break
-      }
-      index += 1
-    }
-    return found
+    return cutsArray.contains(where: { cutOfType.contains($0.type) })
   }
 
   /// Remove the given cutEntry from the cuts storage.
   /// Missing entry is acceptable
+  ///
+  /// Note that each cutEntry is identifiable, thus it needs a matching Id
+  /// Simple time and type is not sufficient
+  ///
   /// - parameter cutEntry: entry structure to remove
   /// - returns : true if entry was found, false if not
   public func removeEntry(_ cutEntry: CutEntry) -> Bool

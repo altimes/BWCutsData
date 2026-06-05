@@ -27,6 +27,4 @@ extension CutsFile {
   public func index(after i: Int) -> Int {
     return cutsArray.index(after: i)
   }
-  
-
 }
