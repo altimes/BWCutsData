@@ -1,5 +1,5 @@
 {
-  "originHash" : "f0fdc16519f16fdfe8da97cc1dd6e5ab841796f432d80159726af696030dde8c",
+  "originHash" : "938aeba719a4c9a7c921caae5d37d9a482194676d5b56bf08e2fd235965407b3",
   "pins" : [
     {
       "identity" : "bwcore",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/altimes/BWCore",
       "state" : {
         "branch" : "main",
-        "revision" : "bfaaa97ab8550a318e6e3b874241c5a1a3cc6045"
+        "revision" : "faf497c4aa3b404c98a3389ecdbee2dfaa35e437"
       }
     }
   ],

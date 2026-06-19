@@ -45,6 +45,9 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
     }
   }
   
+  
+  // MARK: Debug Functions
+  
   // debug support functions
   /// Convert to string with hex values
   func asHex () -> String{

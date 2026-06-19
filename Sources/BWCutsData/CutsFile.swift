@@ -27,8 +27,6 @@ final public class CutsFile: Copyable, MutableCollection {
     get { return cutsArray.count }
   }
   
-  /// Accessor to Parent container
-//  var container : Recording?
   // MARK: Utility properties
   
   /// Get the CoreMedia time of the first mark in the cuts collection.
@@ -94,26 +92,14 @@ final public class CutsFile: Copyable, MutableCollection {
   }
   
   /// Fully Bounded array of IN and OUT cutmarks in time order
-  /// Ensure that complete duration is covered by fabricating any implied starter IN mark and terminal OUT mark
+  /// Ensure that complete duration is covered by synthesizing any implied starter IN mark and terminal OUT mark
   public var fullInOutOnly: [CutEntry] {
     return createFullInOutTable(partialInOut: inOutOnly)
   }
   
-  // TODO: to be injected
-  var durationInPTSFromAccessPoints = PtsType.zero
-  
-  // TODO: to be intected
-  var lastOutCutPTS = PtsType.zero
-  
-  // TODO: to be injected ?
-  var metaDuration: Double?
-  
-  // TODO: to be injected ?
-  var runtimePTS: PtsType?
-  
-  // TODO: to be injected ?
-/// injected when/if player comes ready with video
-  var videoDurationFromPlayer: Double = 0.0
+  var lastOutCutPTS: PtsType? {
+    lastOutCutMark?.cutPts
+  }
   
   // TODO: to be injected ?
   var cache: Cache<String,Data>?
@@ -121,11 +107,22 @@ final public class CutsFile: Copyable, MutableCollection {
   // TODO: to be injected ?
   var apLastPTS: PtsType?
   
+  // TODO: to be injected ?  - duration is time from  last ap entry
+  var durationInPTSFromAccessPoints: PtsType?
+  
+  // TODO: to be injected ?  - runtime is calculated compenating for any PCR reset within recording
+  var runTimeInPTSFromAccessPoints: PtsType?
+  
   // TODO: to be injected ?
   var apHasGaps: Bool?
   
   var runTimeFromFromPlayer: ((_ pts: PtsType) -> PtsType)?
+  
+  // TODO: to be injected ? - units are seconds read from player when it becomes ".readyToPlay"
+  var videoDurationFromPlayer: Double?
+  
   var bestDurationAndApDurationInSeconds: ((_ playerDuration: Double) -> (best: Double, ap: Double))?
+//  var apDurationInSeconds: ((_ apDuration: Double) -> Double)?
 
   
   // create a table that is guaranteed marks at terminal postions
@@ -134,7 +131,8 @@ final public class CutsFile: Copyable, MutableCollection {
   func createFullInOutTable(partialInOut: [CutEntry]) -> [CutEntry]
   {
     let firstPos = PtsType(0)
-    let lastPos =  durationInPTSFromAccessPoints
+    // if duration not yet available use 8 hour end point
+    let lastPos =  durationInPTSFromAccessPoints ?? PtsType.eightHours
     let firstCut = CutEntry(cutPts: firstPos, mark: .IN)
     let lastCut = CutEntry(cutPts: lastPos, mark: .OUT)
     print("fabed first: \(firstCut)")
@@ -255,7 +253,7 @@ final public class CutsFile: Copyable, MutableCollection {
   /// Derives and returns first and last position in a video file
   /// from the cutmarks and video information
   /// - returns : firstIN and lastOut mark points as PtsType
-  func startEnd() -> (firstIN: PtsType, lastOUT: PtsType)
+  func startEnd() -> (firstIN: PtsType, lastOUT: PtsType?)
   {
     let firstInCutPts =  (count != 0) ? ((first!.type == MARK_TYPE.IN) ? first!.cutPts : PtsType(0)) : PtsType(0)
     let lastPTS =   ((inOutOnly.count > 0) && (inOutOnly.last!.type == MARK_TYPE.OUT)) ? inOutOnly.last!.cutPts : lastOutCutPTS
@@ -479,7 +477,7 @@ final public class CutsFile: Copyable, MutableCollection {
     if index == inOut.count-1
     {
       // try using the derived value from the ap file
-      if let apDurationInPTS = runtimePTS
+      if let apDurationInPTS = runTimeInPTSFromAccessPoints
       {
         if (apDurationInPTS > inOut[index].cutPts) {
           outDurationInPTS += apDurationInPTS - inOut[index].cutPts
@@ -516,7 +514,7 @@ final public class CutsFile: Copyable, MutableCollection {
       }
       if newCutsArray.last?.type != MARK_TYPE.IN
       {
-        var pts = PtsType(videoDurationFromPlayer * Double(TimeConstants.PTS_TIMESCALE))
+        var pts = PtsType((videoDurationFromPlayer ?? 0.0) * Double(TimeConstants.PTS_TIMESCALE))
         if (pts == PtsType.zero)  // bugger
           {
             if let apPts = apLastPTS
@@ -532,7 +530,7 @@ final public class CutsFile: Copyable, MutableCollection {
     else // is empty, create a dummy 0..end
     {
         newCutsArray.append(CutEntry(cutPts: PtsType(0), type: MARK_TYPE.IN.rawValue))
-        newCutsArray.append(CutEntry(cutPts: PtsType(videoDurationFromPlayer), type: MARK_TYPE.OUT.rawValue))
+        newCutsArray.append(CutEntry(cutPts: PtsType((videoDurationFromPlayer ?? 0.0) * Double(TimeConstants.PTS_TIMESCALE)), type: MARK_TYPE.OUT.rawValue))
         changed = true
     }
     

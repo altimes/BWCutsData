@@ -15,37 +15,43 @@ import BWCore
 extension CutsFile {
 
   
-  // MARK: Creation Functions
+  // MARK: Bookmark Creation Functions
   
   
   /// Add bookmarks to the array at a fixed time interval.
+  ///
   /// Early simplistic implementation to caculate PTS value from first
   /// PTS value.  Later may interogate .ap file for nearest PTS value.
   /// Honour out/in marks, the interval is a program interval (as defined by OUT/IN)
   /// markers, not simple recording duration
+  ///
   /// Note that this deliberately avoids a begin boundary bookmark
-  /// Cutting appears to occur on GOP boundaries and can end up with negative
+  /// Cutting appears to occur on GOP boundaries and can end up with negative PTS
   /// bookmarks.
   
   /// - parameter interval: interval between bookmarks in seconds
   /// - parameter firstInCutPts: pts value of the start position
   /// - parameter lastOutCutPts: pts value of the end position
   
-  func addFixedIntervalBookmarks (interval: PtsType, firstInCutPts: PtsType, lastOutCutPts: PtsType)
+  func addFixedIntervalBookmarks (interval: PtsType, firstInCutPts: PtsType, lastOutCutPts: PtsType, metaDuration: Double? = 0.0, apRuntimePTS: PtsType? = PtsType(0))
   {
     var lastPts = lastOutCutPts
     
+    // being careful of parameter values that will come from recording in which a
+    // a PCR reset can occur at any time.  This sets the PTS back to zero, thus we
+    // have to be able to smoothly handle the situation where the 'lastOutCutPts' is a
+    // smaller value than 'firstInCutPts'  -  nuts we know, but that is broadcasting for you..
     if (firstInCutPts < lastOutCutPts)  // important for UIntXX values
     {
       // get duration from meta and compare to first / last pts range
       // editted file will result in a substantial mismatch
-      if let metaDuration = metaDuration {
+      if let metaDuration = metaDuration, let apRuntimePTS = apRuntimePTS{
         let ptsDuration = Double(lastOutCutPts - firstInCutPts)
         let durationDiff = abs(ptsDuration-metaDuration)
         // is the diffrence > 30 secs ?
         if metaDuration != 0 && durationDiff > 30.0*Double(TimeConstants.PTS_TIMESCALE) {
           // file has had advertisements removed, check that last matches the ap data
-            lastPts = firstInCutPts + (runtimePTS)!
+            lastPts = firstInCutPts + apRuntimePTS
           // FIXME: this algorithm is broken for edited file (in/outs) are missing
           // might be fixable by finding gaps and inserting temp in/out at gap boundaries
         }
@@ -107,7 +113,7 @@ extension CutsFile {
     let intervalInSeconds = interval
     let (first, last) = startEnd()
     let ptsIncrement = PtsType( intervalInSeconds*Int(TimeConstants.PTS_TIMESCALE))
-    addFixedIntervalBookmarks(interval: ptsIncrement, firstInCutPts: first, lastOutCutPts: last)
+    addFixedIntervalBookmarks(interval: ptsIncrement, firstInCutPts: first, lastOutCutPts: last ?? PtsType.eightHours)
   }
 
   /// Add bookmarks to the collection at the spacing from the given start position
@@ -118,7 +124,7 @@ extension CutsFile {
   /// - parameter upToPos: value not to create bookmarks beyond
   /// - parameter spacing: spacing of bookmarks
   /// - returns : remainder of unused spacing
-  fileprivate func addMarks(fromPos: PtsType, upToPos: PtsType, spacing: PtsType) -> PtsType
+  func addMarks(fromPos: PtsType, upToPos: PtsType, spacing: PtsType) -> PtsType
   {
     var bookmarkPosition: PtsType
     if (debug) { print("received start at: \(Double(fromPos)*TimeConstants.PTS_DURATION)") }
@@ -149,18 +155,15 @@ extension CutsFile {
   {
     let (first, last) = startEnd()
     // get duration
-    let programLength =  playable(startPTS: first, endPTS: last)
+    let programLength =  playable(startPTS: first, endPTS: last ?? PtsType.eightHours)
     let ptsOffset = programLength / PtsType(numberOfMarks+1)
-    addFixedIntervalBookmarks(interval: ptsOffset, firstInCutPts: first, lastOutCutPts: last)
+    addFixedIntervalBookmarks(interval: ptsOffset, firstInCutPts: first, lastOutCutPts: last ?? PtsType.eightHours)
   }
-
-
   
   // MARK: Query Functions
   
-  
   /// Check if array has a matching (==) entry
-  /// Wrapper function to detach implementation detail
+  /// Wrapper function to hide implementation detail
   /// - parameter cutEntry: entry to search for
   public func contains(_ entry: CutEntry) -> Bool
   {
@@ -190,8 +193,6 @@ extension CutsFile {
       return (self.inOutOnly.count > 0 && validation.result)
     }
   }
-  
-
   
   // MARK: Debug utilities
   
@@ -246,6 +247,4 @@ extension CutsFile {
       lineNumber += 1
     }
   }
-  
-
 }
