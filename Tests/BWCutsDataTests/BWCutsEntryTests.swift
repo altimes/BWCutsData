@@ -12,7 +12,6 @@ import Testing
 struct TestCutsEntry {
 
   @Test func testEqual() async throws {
-      // Write your test here and use APIs like `#expect(...)` to check expected conditions.
     let entry1 = CutEntry(cutPts: PtsType(500), mark: .IN)
     let entry2 = CutEntry(cutPts: PtsType(500), mark: .IN)
     let entry3 = CutEntry(cutPts: PtsType(200), mark: .IN)

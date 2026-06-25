@@ -33,7 +33,7 @@ extension CutsFile {
   /// - parameter firstInCutPts: pts value of the start position
   /// - parameter lastOutCutPts: pts value of the end position
   
-  func addFixedIntervalBookmarks (interval: PtsType, firstInCutPts: PtsType, lastOutCutPts: PtsType, metaDuration: Double? = 0.0, apRuntimePTS: PtsType? = PtsType(0))
+  public func addFixedIntervalBookmarks (interval: PtsType, firstInCutPts: PtsType, lastOutCutPts: PtsType, metaDuration: Double? = 0.0, apRuntimePTS: PtsType? = PtsType(0))
   {
     var lastPts = lastOutCutPts
     
@@ -108,7 +108,7 @@ extension CutsFile {
   
   /// - parameter interval: interval between bookmarks in seconds
   
-  func addFixedTimeBookmarks (interval: Int)
+  public func addFixedTimeBookmarks (interval: Int)
   {
     let intervalInSeconds = interval
     let (first, last) = startEnd()
@@ -124,20 +124,20 @@ extension CutsFile {
   /// - parameter upToPos: value not to create bookmarks beyond
   /// - parameter spacing: spacing of bookmarks
   /// - returns : remainder of unused spacing
-  func addMarks(fromPos: PtsType, upToPos: PtsType, spacing: PtsType) -> PtsType
+  public func addMarks(fromPos: PtsType, upToPos: PtsType, spacing: PtsType) -> PtsType
   {
-    var bookmarkPosition: PtsType
+    var initialBookmarkPosition: PtsType
     if (debug) { print("received start at: \(Double(fromPos)*TimeConstants.PTS_DURATION)") }
-    bookmarkPosition = fromPos + spacing
-    while bookmarkPosition < upToPos {
-      if (debug) { print("Creating entry at \(Double(bookmarkPosition)*TimeConstants.PTS_DURATION) for spacing of \(Double(spacing)*TimeConstants.PTS_DURATION)") }
-      _ = addEntry(CutEntry(cutPts: bookmarkPosition, mark: .BOOKMARK))
-      bookmarkPosition += spacing
+    initialBookmarkPosition = fromPos + spacing
+    while initialBookmarkPosition <= upToPos {
+      if (debug) { print("Creating entry at \(Double(initialBookmarkPosition)*TimeConstants.PTS_DURATION) for spacing of \(Double(spacing)*TimeConstants.PTS_DURATION)") }
+      _ = addEntry(CutEntry(cutPts: initialBookmarkPosition, mark: .BOOKMARK))
+      initialBookmarkPosition += spacing
     }
-    // FIXME: fails here when editing an already edited file.
-    let used = spacing - (bookmarkPosition - upToPos)
-    if (debug) { print("returning remainder of \(Double(used)*TimeConstants.PTS_DURATION)") }
-    return used
+    // FIXME: fails here when editing an already edited file. - problem with the gaps
+    let unused = self.last!.cutPts - upToPos
+    if (debug) { print("returning remainder of \(Double(unused)*TimeConstants.PTS_DURATION)") }
+    return unused
   }
   
   /// Add fixed NUMBER of bookmarks
@@ -173,7 +173,7 @@ extension CutsFile {
   /// Get a formatted string of the entry if that entry is of any type that is in the set of cut types given
   /// - parameter cutEntry: entry to be formatted if it matches the condition
   /// - parameter markSet: Set of required mark types
-  func cutDataMarkOfTypeAsString(_ cutEntry: CutEntry, markSet : Set<MARK_TYPE>) -> String?
+  public func cutDataMarkOfTypeAsString(_ cutEntry: CutEntry, markSet : Set<MARK_TYPE>) -> String?
   {
     var result : String? = nil
     if (markSet.contains(cutEntry.type))
@@ -237,7 +237,7 @@ extension CutsFile {
   /// Utility debug to verify order and contents of collection
   ///  Print to console  items that match the set member type
   /// - parameter markSet: Set of required mark types
-  func printSetOfType(_ markSet : Set<MARK_TYPE>) {
+  public func printSetOfType(_ markSet : Set<MARK_TYPE>) {
     var lineNumber = 0
     for entry in cutsArray {
       if let item = cutDataMarkOfTypeAsString(entry, markSet: markSet)

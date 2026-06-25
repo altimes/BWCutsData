@@ -13,7 +13,6 @@ import Testing
 struct TestCutsFile {
 
     @Test func testContainsMark() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
       // create structure equivalent to empty file
       let cutsFile = CutsFile(data: Data())
       let inEntry = CutEntry(cutPts: PtsType(0), mark: .IN)

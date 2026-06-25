@@ -161,7 +161,8 @@ public struct  CutEntry: Identifiable, Equatable, Comparable {
   func asStringDecimal() -> String {
     if let markType = MARK_TYPE(rawValue: type.rawValue) {
       let timeStamp = String(format:"%ld", self.cutPts.value)
-      return "\(markType) " + timeStamp
+      let humanStamp = self.cutPts.hhMMss
+      return "\(markType) " + timeStamp + " " + humanStamp
     }
     else {
       return "Unknown Mark Type code \(type) " + self.cutPts.hhMMss
